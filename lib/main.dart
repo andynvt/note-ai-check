@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:notes/firebase_options.dart';
 import 'models/note_model.dart';
 import 'views/splash_screen.dart';
 import 'views/home_screen.dart';
