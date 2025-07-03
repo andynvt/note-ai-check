@@ -1,0 +1,74 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:notes/models/note_model.dart';
+import 'package:notes/view_models/note_view_model.dart';
+import 'package:notes/services/note_service.dart';
+import 'package:hive/hive.dart';
+import 'dart:io';
+
+class TestableNoteViewModel extends NoteViewModel {
+  TestableNoteViewModel(NoteService service) : super(service: service);
+}
+
+void main() async {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  final testDir = Directory('./test/hive_testing');
+  if (!testDir.existsSync()) {
+    testDir.createSync(recursive: true);
+  }
+  Hive.init(testDir.path);
+  Hive.registerAdapter(NoteModelAdapter());
+  final box = await Hive.openBox<NoteModel>('notes_view_model_test');
+  final service = NoteService(noteBox: box, mockApi: true);
+
+  group('NoteViewModel', () {
+    late NoteViewModel viewModel;
+    setUp(() {
+      viewModel = TestableNoteViewModel(service);
+    });
+
+    tearDown(() async {
+      await box.clear();
+    });
+
+    test('Initial notes list is empty or loaded', () async {
+      await viewModel.loadNotes();
+      expect(viewModel.notes, isA<List<NoteModel>>());
+    });
+
+    test('Add note', () async {
+      final note = NoteModel(id: '1', title: 'Test', content: 'Content', backgroundColor: 0xFFFFFFFF, imagePath: null, createdDate: DateTime.now(), updatedDate: DateTime.now());
+      await viewModel.addNote(note);
+      expect(viewModel.notes.any((n) => n.id == '1'), true);
+    });
+
+    test('Update note', () async {
+      final note = NoteModel(id: '2', title: 'Test2', content: 'Content2', backgroundColor: 0xFFFFFFFF, imagePath: null, createdDate: DateTime.now(), updatedDate: DateTime.now());
+      await viewModel.addNote(note);
+      final updated = NoteModel(
+        id: note.id,
+        title: 'Updated',
+        content: note.content,
+        backgroundColor: note.backgroundColor,
+        imagePath: note.imagePath,
+        createdDate: note.createdDate,
+        updatedDate: DateTime.now(),
+      );
+      await viewModel.updateNote(updated);
+      expect(viewModel.notes.first.title, 'Updated');
+    });
+
+    test('Delete note', () async {
+      final note = NoteModel(id: '3', title: 'Test3', content: 'Content3', backgroundColor: 0xFFFFFFFF, imagePath: null, createdDate: DateTime.now(), updatedDate: DateTime.now());
+      await viewModel.addNote(note);
+      await viewModel.deleteNote(note.id);
+      expect(viewModel.notes.any((n) => n.id == note.id), false);
+    });
+  });
+
+  tearDownAll(() async {
+    try {
+      await box.close();
+      await box.deleteFromDisk();
+    } catch (_) {}
+  });
+}

@@ -5,7 +5,10 @@ import '../models/note_model.dart';
 class NoteService {
   final Dio _dio = Dio();
   final String _baseUrl = 'https://mockapi.io/notes'; // Replace with your mock API
-  final Box<NoteModel> _noteBox = Hive.box<NoteModel>('notes');
+  final Box<NoteModel> _noteBox;
+  final bool mockApi;
+
+  NoteService({Box<NoteModel>? noteBox, this.mockApi = false}) : _noteBox = noteBox ?? Hive.box<NoteModel>('notes');
 
   // Local Hive operations
   List<NoteModel> getNotes() {
@@ -22,49 +25,58 @@ class NoteService {
 
   Future<void> addNote(NoteModel note) async {
     await _noteBox.put(note.id, note);
-    // Optionally sync with API
-    await createNoteApi(note);
+    if (!mockApi) {
+      await createNoteApi(note);
+    }
   }
 
   Future<void> updateNote(NoteModel note) async {
     await _noteBox.put(note.id, note);
-    await updateNoteApi(note);
+    if (!mockApi) {
+      await updateNoteApi(note);
+    }
   }
 
   Future<void> deleteNote(String id) async {
     await _noteBox.delete(id);
-    await deleteNoteApi(id);
+    if (!mockApi) {
+      await deleteNoteApi(id);
+    }
   }
 
   // Mock API operations
   Future<List<NoteModel>> fetchNotesApi() async {
-    // Simulate API call
+    if (mockApi) return [];
     final response = await _dio.get('$_baseUrl');
     // TODO: Parse response and return list of NoteModel
     return [];
   }
 
   Future<NoteModel?> fetchNoteByIdApi(String id) async {
+    if (mockApi) return null;
     final response = await _dio.get('$_baseUrl/$id');
     // TODO: Parse response and return NoteModel
     return null;
   }
 
   Future<void> createNoteApi(NoteModel note) async {
+    if (mockApi) return;
     await _dio.post('$_baseUrl', data: note.toJson());
   }
 
   Future<void> updateNoteApi(NoteModel note) async {
+    if (mockApi) return;
     await _dio.put('$_baseUrl/${note.id}', data: note.toJson());
   }
 
   Future<void> deleteNoteApi(String id) async {
+    if (mockApi) return;
     await _dio.delete('$_baseUrl/$id');
   }
 
   // Sync local notes with API
   Future<void> syncNotes() async {
-    // Example: fetch from API and update local Hive
+    if (mockApi) return;
     final apiNotes = await fetchNotesApi();
     for (var note in apiNotes) {
       await _noteBox.put(note.id, note);

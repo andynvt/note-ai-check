@@ -1,13 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:notes/view_models/note_view_model.dart';
 import 'models/note_model.dart';
+import 'views/splash_screen.dart';
+import 'views/home_screen.dart';
+import 'views/note_editor_screen.dart';
+import 'views/detail_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  // Optionally: handle background notification logic
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   await Hive.initFlutter();
   Hive.registerAdapter(NoteModelAdapter());
   await Hive.openBox<NoteModel>('notes');
-  runApp(const MyApp());
+
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  runApp(ChangeNotifierProvider(create: (_) => NoteViewModel(), child: const MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -16,8 +33,13 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    // Listen for foreground messages and trigger sync
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+      final noteViewModel = Provider.of<NoteViewModel>(context, listen: false);
+      await noteViewModel.syncNotes();
+    });
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Notes',
       theme: ThemeData(
         // This is the theme of your application.
         //
@@ -36,7 +58,21 @@ class MyApp extends StatelessWidget {
         // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      initialRoute: '/',
+      onGenerateRoute: (settings) {
+        if (settings.name == '/') {
+          return MaterialPageRoute(builder: (_) => const SplashScreen());
+        } else if (settings.name == '/home') {
+          return MaterialPageRoute(builder: (_) => const HomeScreen());
+        } else if (settings.name == '/edit') {
+          final noteId = settings.arguments as String?;
+          return MaterialPageRoute(builder: (_) => NoteEditorScreen(noteId: noteId));
+        } else if (settings.name == '/detail') {
+          final noteId = settings.arguments as String;
+          return MaterialPageRoute(builder: (_) => DetailScreen(noteId: noteId));
+        }
+        return null;
+      },
     );
   }
 }

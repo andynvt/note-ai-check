@@ -3,7 +3,7 @@ import '../models/note_model.dart';
 import '../services/note_service.dart';
 
 class NoteViewModel extends ChangeNotifier {
-  final NoteService _noteService = NoteService();
+  final NoteService _noteService;
 
   List<NoteModel> _notes = [];
   bool _isLoading = false;
@@ -11,7 +11,7 @@ class NoteViewModel extends ChangeNotifier {
   List<NoteModel> get notes => _notes;
   bool get isLoading => _isLoading;
 
-  NoteViewModel() {
+  NoteViewModel({NoteService? service}) : _noteService = service ?? NoteService() {
     loadNotes();
   }
 
