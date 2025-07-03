@@ -47,21 +47,21 @@ class NoteService {
   // Mock API operations
   Future<List<NoteModel>> fetchNotesApi() async {
     if (mockApi) return [];
-    final response = await _dio.get('$_baseUrl');
+    await _dio.get(_baseUrl);
     // TODO: Parse response and return list of NoteModel
     return [];
   }
 
   Future<NoteModel?> fetchNoteByIdApi(String id) async {
     if (mockApi) return null;
-    final response = await _dio.get('$_baseUrl/$id');
+    await _dio.get('$_baseUrl/$id');
     // TODO: Parse response and return NoteModel
     return null;
   }
 
   Future<void> createNoteApi(NoteModel note) async {
     if (mockApi) return;
-    await _dio.post('$_baseUrl', data: note.toJson());
+    await _dio.post(_baseUrl, data: note.toJson());
   }
 
   Future<void> updateNoteApi(NoteModel note) async {

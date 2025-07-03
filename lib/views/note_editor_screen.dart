@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/note_model.dart';
@@ -9,7 +11,7 @@ import 'package:permission_handler/permission_handler.dart';
 
 class NoteEditorScreen extends StatefulWidget {
   final String? noteId;
-  const NoteEditorScreen({Key? key, this.noteId}) : super(key: key);
+  const NoteEditorScreen({super.key, this.noteId});
 
   @override
   State<NoteEditorScreen> createState() => _NoteEditorScreenState();
@@ -68,7 +70,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       } else {
         await viewModel.addNote(note);
       }
-      if (mounted) Navigator.of(context).pop();
+      if (!mounted) return;
+      Navigator.of(context).pop();
     }
   }
 

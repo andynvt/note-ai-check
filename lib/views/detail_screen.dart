@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../view_models/note_view_model.dart';
-import '../models/note_model.dart';
 import 'dart:io';
 
 class DetailScreen extends StatelessWidget {
   final String noteId;
-  const DetailScreen({Key? key, required this.noteId}) : super(key: key);
+  const DetailScreen({super.key, required this.noteId});
 
   @override
   Widget build(BuildContext context) {
@@ -24,20 +23,22 @@ class DetailScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.delete),
             onPressed: () async {
+              final navigator = Navigator.of(context);
               final confirm = await showDialog<bool>(
                 context: context,
                 builder: (context) => AlertDialog(
                   title: const Text('Delete Note'),
                   content: const Text('Are you sure you want to delete this note?'),
                   actions: [
-                    TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
-                    TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Delete')),
+                    TextButton(onPressed: () => navigator.pop(false), child: const Text('Cancel')),
+                    TextButton(onPressed: () => navigator.pop(true), child: const Text('Delete')),
                   ],
                 ),
               );
+              if (!context.mounted) return;
               if (confirm == true) {
                 await Provider.of<NoteViewModel>(context, listen: false).deleteNote(note.id);
-                if (context.mounted) Navigator.of(context).pop();
+                if (navigator.canPop()) navigator.pop();
               }
             },
           ),
